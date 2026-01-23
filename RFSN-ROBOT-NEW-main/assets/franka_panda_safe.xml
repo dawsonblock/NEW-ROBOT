@@ -1,0 +1,19 @@
+<!-- Franka Panda Safe Configuration -->
+<mujoco model="franka_safe">
+  <option timestep="0.002" gravity="0 0 -9.81"/>
+  <flag contact="enable"/>
+
+  <default>
+    <joint damping="1.2" armature="0.02"/>
+    <geom friction="1.3 0.01 0.01" contype="1" conaffinity="1"/>
+  </default>
+
+  <!-- Include main robot model -->
+  <!-- <include file="franka_panda.xml"/> -->
+
+  <sensor>
+    <jointpos joint="panda_joint1"/>
+    <jointvel joint="panda_joint1"/>
+    <force site="panda_grip_site"/>
+  </sensor>
+</mujoco>

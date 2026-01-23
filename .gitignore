@@ -1,0 +1,58 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Environment
+.env
+.venv
+venv/
+ENV/
+
+# Mac
+.DS_Store
+
+# Logs and Media
+*.log
+*.mp4
+*.webp
+demo_capture.mp4
+demo_log.jsonl
+
+# Project specific
+runs/
+checkpoint/
+checkpoints/
+eval/
+eval_results.txt
+repair_all.py
+test_policy.py
+verify_policy.py
+record_demo.py

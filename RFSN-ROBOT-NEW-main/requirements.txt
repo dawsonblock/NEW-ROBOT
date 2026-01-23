@@ -1,0 +1,21 @@
+# Core dependencies for the RFSN robotics stack
+#
+# This file lists the minimal set of Python packages required to run
+# the RFSN codebase.  When installing for development or running
+# demos and evaluation, you will also need the optional extras
+# listed at the bottom of this file.
+#
+# To install the core dependencies:
+#
+#     pip install -r requirements.txt
+#
+# Optional extras are installed via
+#
+#     pip install -r requirements.txt -r requirements-extras.txt
+
+numpy
+scipy
+osqp
+mujoco
+pyyaml
+torch

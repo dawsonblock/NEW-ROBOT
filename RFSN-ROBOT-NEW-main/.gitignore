@@ -1,0 +1,27 @@
+# Ignore Python bytecode and cache directories
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore build artifacts
+*.egg-info/
+dist/
+build/
+
+# Ignore other common artifacts
+.DS_Store
+*.log
+*.mp4
+*.webp
+.venv/
+checkpoints/
+demo_capture.mp4
+demo_log.jsonl
+runs/
+training_plots/
+eval_results.txt
+repair_all.py
+test_policy.py
+verify_policy.py
+record_demo.py

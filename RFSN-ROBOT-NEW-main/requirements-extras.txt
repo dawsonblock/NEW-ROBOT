@@ -1,0 +1,6 @@
+# Optional dependencies used in demos, evaluation, and plotting
+# These packages are not required for core library functionality.
+
+pandas
+matplotlib
+glfw

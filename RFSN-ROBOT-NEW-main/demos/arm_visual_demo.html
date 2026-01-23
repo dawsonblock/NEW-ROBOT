@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RFSN Panda Arm - Interactive Visual Demo</title>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-card: #1a1a24;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-purple: #8b5cf6;
+            --accent-green: #22c55e;
+            --accent-orange: #f59e0b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #2a2a3a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            height: 100vh;
+        }
+
+        /* 3D Canvas Area */
+        .canvas-area {
+            position: relative;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            overflow: hidden;
+        }
+
+        #armCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #armCanvas:active {
+            cursor: grabbing;
+        }
+
+        /* Header Overlay */
+        .header-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 24px 32px;
+            background: linear-gradient(to bottom, rgba(10, 10, 15, 0.9) 0%, transparent 100%);
+            z-index: 10;
+        }
+
+        .header-overlay h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-cyan) 0%, var(--accent-purple) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
+        }
+
+        .header-overlay p {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Status Bar */
+        .status-bar {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            display: flex;
+            gap: 16px;
+            z-index: 10;
+        }
+
+        .status-item {
+            background: rgba(26, 26, 36, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .status-dot.green { background: var(--accent-green); box-shadow: 0 0 12px var(--accent-green); }
+        .status-dot.blue { background: var(--accent-blue); box-shadow: 0 0 12px var(--accent-blue); }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.9); }
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border);
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel-header {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-header svg {
+            width: 20px;
+            height: 20px;
+            color: var(--accent-cyan);
+        }
+
+        /* Joint Controls */
+        .joint-control {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            transition: all 0.2s ease;
+        }
+
+        .joint-control:hover {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.1);
+        }
+
+        .joint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .joint-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--accent-cyan);
+        }
+
+        .joint-value {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: var(--accent-orange);
+            background: rgba(245, 158, 11, 0.1);
+            padding: 4px 10px;
+            border-radius: 6px;
+        }
+
+        .joint-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: var(--bg-primary);
+            border-radius: 3px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .joint-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+            transition: transform 0.2s ease;
+        }
+
+        .joint-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .joint-limits {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Preset Poses */
+        .preset-section {
+            margin-top: 8px;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .preset-btn {
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-primary) 100%);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 12px;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .preset-btn:hover {
+            border-color: var(--accent-purple);
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, var(--bg-primary) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(139, 92, 246, 0.2);
+        }
+
+        .preset-btn .icon {
+            font-size: 1.5rem;
+        }
+
+        /* Gripper Control */
+        .gripper-section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .gripper-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .gripper-status {
+            font-size: 0.85rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .gripper-status.open {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--accent-green);
+        }
+
+        .gripper-status.closed {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--accent-orange);
+        }
+
+        .gripper-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .gripper-btn.open-btn {
+            background: linear-gradient(135deg, var(--accent-green), #16a34a);
+            color: white;
+        }
+
+        .gripper-btn.close-btn {
+            background: linear-gradient(135deg, var(--accent-orange), #d97706);
+            color: white;
+        }
+
+        .gripper-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Animation Controls */
+        .animation-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--accent-purple);
+        }
+
+        .play-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        .play-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Info Panel */
+        .info-panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            margin-top: auto;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .info-value {
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+            pointer-events: none;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .tooltip.visible {
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+                grid-template-rows: 60vh 1fr;
+            }
+
+            .control-panel {
+                border-left: none;
+                border-top: 1px solid var(--border);
+            }
+
+            .status-bar {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 3D Canvas Area -->
+        <div class="canvas-area">
+            <div class="header-overlay">
+                <h1>🤖 RFSN Panda Arm Demo</h1>
+                <p>Interactive 7-DOF Robotic Arm Visualization</p>
+            </div>
+
+            <canvas id="armCanvas"></canvas>
+
+            <div class="status-bar">
+                <div class="status-item">
+                    <div class="status-dot green"></div>
+                    <span>System Active</span>
+                </div>
+                <div class="status-item">
+                    <div class="status-dot blue"></div>
+                    <span>Safety OK</span>
+                </div>
+            </div>
+
+            <div class="tooltip" id="tooltip"></div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <div class="panel-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1Z"/>
+                </svg>
+                Joint Control
+            </div>
+
+            <!-- Joint Sliders -->
+            <div id="jointControls"></div>
+
+            <!-- Preset Poses -->
+            <div class="preset-section">
+                <div class="panel-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                        <polyline points="22,6 12,13 2,6"/>
+                    </svg>
+                    Preset Poses
+                </div>
+                <div class="preset-grid">
+                    <button class="preset-btn" onclick="setPose('home')">
+                        <span class="icon">🏠</span>
+                        <span>Home</span>
+                    </button>
+                    <button class="preset-btn" onclick="setPose('ready')">
+                        <span class="icon">🎯</span>
+                        <span>Ready</span>
+                    </button>
+                    <button class="preset-btn" onclick="setPose('reach')">
+                        <span class="icon">👋</span>
+                        <span>Reach</span>
+                    </button>
+                    <button class="preset-btn" onclick="setPose('folded')">
+                        <span class="icon">📦</span>
+                        <span>Folded</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Gripper Control -->
+            <div class="gripper-section">
+                <div class="gripper-header">
+                    <span class="joint-name">🤏 Gripper</span>
+                    <span class="gripper-status open" id="gripperStatus">Open</span>
+                </div>
+                <button class="gripper-btn open-btn" id="gripperBtn" onclick="toggleGripper()">
+                    Close Gripper
+                </button>
+            </div>
+
+            <!-- Animation Section -->
+            <div class="animation-section">
+                <div class="panel-header" style="border-bottom: none; padding-bottom: 8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    Demo Animation
+                </div>
+                <button class="play-btn" id="playBtn" onclick="playAnimation()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    Play Pick & Place
+                </button>
+            </div>
+
+            <!-- Info Panel -->
+            <div class="info-panel">
+                <div class="panel-header">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="16" x2="12" y2="12"/>
+                        <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                    End Effector
+                </div>
+                <div class="info-row">
+                    <span class="info-label">X Position</span>
+                    <span class="info-value" id="eeX">0.000</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Y Position</span>
+                    <span class="info-value" id="eeY">0.000</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Z Position</span>
+                    <span class="info-value" id="eeZ">0.800</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Panda arm joint configuration
+        const JOINTS = [
+            { name: 'Joint 1 (Base)', min: -2.8973, max: 2.8973, value: 0, color: '#3b82f6' },
+            { name: 'Joint 2 (Shoulder)', min: -1.7628, max: 1.7628, value: 0, color: '#8b5cf6' },
+            { name: 'Joint 3 (Upper Arm)', min: -2.8973, max: 2.8973, value: 0, color: '#06b6d4' },
+            { name: 'Joint 4 (Elbow)', min: -3.0718, max: -0.0698, value: -1.5, color: '#22c55e' },
+            { name: 'Joint 5 (Forearm)', min: -2.8973, max: 2.8973, value: 0, color: '#f59e0b' },
+            { name: 'Joint 6 (Wrist 1)', min: -0.0175, max: 3.7525, value: 1.5, color: '#ef4444' },
+            { name: 'Joint 7 (Wrist 2)', min: -2.8973, max: 2.8973, value: 0, color: '#ec4899' }
+        ];
+
+        // Link lengths for visualization (scaled)
+        const LINK_LENGTHS = [0.333, 0.316, 0.0825, 0.384, 0.088, 0.107, 0.103];
+
+        // Preset poses (joint angles in radians)
+        const POSES = {
+            home: [0, 0, 0, -1.57, 0, 1.57, 0],
+            ready: [0, -0.4, 0, -2.0, 0, 1.8, 0.785],
+            reach: [0.5, 0.3, 0.2, -1.2, 0.3, 2.0, 0],
+            folded: [0, -1.0, 0, -2.5, 0, 1.5, 0]
+        };
+
+        let gripperOpen = true;
+        let isAnimating = false;
+        let rotationX = -0.3;
+        let rotationY = 0.4;
+        let zoom = 1.0;
+        let isDragging = false;
+        let lastMouseX, lastMouseY;
+
+        const canvas = document.getElementById('armCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Initialize joint controls
+        function initJointControls() {
+            const container = document.getElementById('jointControls');
+            
+            JOINTS.forEach((joint, index) => {
+                const control = document.createElement('div');
+                control.className = 'joint-control';
+                control.innerHTML = `
+                    <div class="joint-header">
+                        <span class="joint-name">${joint.name}</span>
+                        <span class="joint-value" id="val${index}">${joint.value.toFixed(2)} rad</span>
+                    </div>
+                    <input type="range" class="joint-slider" 
+                           id="slider${index}" 
+                           min="${joint.min}" 
+                           max="${joint.max}" 
+                           step="0.01"
+                           value="${joint.value}"
+                           oninput="updateJoint(${index}, this.value)">
+                    <div class="joint-limits">
+                        <span>${joint.min.toFixed(2)}</span>
+                        <span>${joint.max.toFixed(2)}</span>
+                    </div>
+                `;
+                container.appendChild(control);
+            });
+        }
+
+        // Update joint value
+        function updateJoint(index, value) {
+            JOINTS[index].value = parseFloat(value);
+            document.getElementById(`val${index}`).textContent = parseFloat(value).toFixed(2) + ' rad';
+            draw();
+        }
+
+        // Set preset pose
+        function setPose(poseName) {
+            if (isAnimating) return;
+            
+            const targetPose = POSES[poseName];
+            const startPose = JOINTS.map(j => j.value);
+            const duration = 800;
+            const startTime = performance.now();
+
+            function animatePose(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3); // Ease out cubic
+
+                JOINTS.forEach((joint, i) => {
+                    joint.value = startPose[i] + (targetPose[i] - startPose[i]) * eased;
+                    document.getElementById(`slider${i}`).value = joint.value;
+                    document.getElementById(`val${i}`).textContent = joint.value.toFixed(2) + ' rad';
+                });
+
+                draw();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animatePose);
+                }
+            }
+
+            requestAnimationFrame(animatePose);
+        }
+
+        // Toggle gripper
+        function toggleGripper() {
+            gripperOpen = !gripperOpen;
+            const status = document.getElementById('gripperStatus');
+            const btn = document.getElementById('gripperBtn');
+            
+            if (gripperOpen) {
+                status.textContent = 'Open';
+                status.className = 'gripper-status open';
+                btn.textContent = 'Close Gripper';
+                btn.className = 'gripper-btn open-btn';
+            } else {
+                status.textContent = 'Closed';
+                status.className = 'gripper-status closed';
+                btn.textContent = 'Open Gripper';
+                btn.className = 'gripper-btn close-btn';
+            }
+            
+            draw();
+        }
+
+        // Play demo animation
+        function playAnimation() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            const btn = document.getElementById('playBtn');
+            btn.disabled = true;
+            btn.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 6v6l4 2"/>
+                </svg>
+                Animating...
+            `;
+
+            const sequence = [
+                { pose: 'home', gripper: true, delay: 500 },
+                { pose: 'ready', gripper: true, delay: 600 },
+                { pose: 'reach', gripper: true, delay: 600 },
+                { pose: 'reach', gripper: false, delay: 400 }, // Close gripper
+                { pose: 'ready', gripper: false, delay: 600 },
+                { pose: 'home', gripper: false, delay: 600 },
+                { pose: 'home', gripper: true, delay: 300 } // Open gripper
+            ];
+
+            let currentStep = 0;
+
+            function nextStep() {
+                if (currentStep >= sequence.length) {
+                    isAnimating = false;
+                    btn.disabled = false;
+                    btn.innerHTML = `
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                        </svg>
+                        Play Pick & Place
+                    `;
+                    return;
+                }
+
+                const step = sequence[currentStep];
+                
+                // Set pose
+                const targetPose = POSES[step.pose];
+                const startPose = JOINTS.map(j => j.value);
+                const duration = 600;
+                const startTime = performance.now();
+
+                function animateStep(currentTime) {
+                    const elapsed = currentTime - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+                    const eased = 1 - Math.pow(1 - progress, 3);
+
+                    JOINTS.forEach((joint, i) => {
+                        joint.value = startPose[i] + (targetPose[i] - startPose[i]) * eased;
+                        document.getElementById(`slider${i}`).value = joint.value;
+                        document.getElementById(`val${i}`).textContent = joint.value.toFixed(2) + ' rad';
+                    });
+
+                    draw();
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animateStep);
+                    } else {
+                        // Set gripper state
+                        if (gripperOpen !== step.gripper) {
+                            toggleGripper();
+                        }
+                        
+                        currentStep++;
+                        setTimeout(nextStep, step.delay);
+                    }
+                }
+
+                requestAnimationFrame(animateStep);
+            }
+
+            nextStep();
+        }
+
+        // 3D rotation & projection
+        function rotatePoint(x, y, z, rx, ry) {
+            // Rotate around Y axis
+            let temp = x;
+            x = x * Math.cos(ry) - z * Math.sin(ry);
+            z = temp * Math.sin(ry) + z * Math.cos(ry);
+            
+            // Rotate around X axis
+            temp = y;
+            y = y * Math.cos(rx) - z * Math.sin(rx);
+            z = temp * Math.sin(rx) + z * Math.cos(rx);
+            
+            return { x, y, z };
+        }
+
+        function project(x, y, z) {
+            const scale = 400 * zoom;
+            const perspective = 800;
+            const zOffset = z + 3;
+            const factor = perspective / (perspective + zOffset);
+            
+            return {
+                x: canvas.width / 2 + x * scale * factor,
+                y: canvas.height / 2 - y * scale * factor,
+                z: zOffset
+            };
+        }
+
+        // Forward kinematics
+        function computeFK() {
+            const points = [{ x: 0, y: 0, z: 0 }];
+            let x = 0, y = 0, z = 0;
+            
+            // Simplified FK for visualization
+            const angles = JOINTS.map(j => j.value);
+            
+            // Base rotation (joint 1)
+            const c1 = Math.cos(angles[0]), s1 = Math.sin(angles[0]);
+            
+            // Link 1 (vertical)
+            z += 0.333;
+            points.push({ x, y, z });
+            
+            // Joint 2 (shoulder)
+            const c2 = Math.cos(angles[1]), s2 = Math.sin(angles[1]);
+            const l2 = 0.316;
+            x += c1 * l2 * s2;
+            y += s1 * l2 * s2;
+            z += l2 * c2;
+            points.push({ x, y, z });
+            
+            // Joint 3 (upper arm rotation)
+            const c3 = Math.cos(angles[2] + angles[0]), s3 = Math.sin(angles[2] + angles[0]);
+            
+            // Joint 4 (elbow)
+            const c4 = Math.cos(angles[3] + angles[1]), s4 = Math.sin(angles[3] + angles[1]);
+            const l4 = 0.384;
+            x += c3 * l4 * s4;
+            y += s3 * l4 * s4;
+            z += l4 * c4 * 0.5;
+            points.push({ x, y, z });
+            
+            // Joint 5-7 (wrist)
+            const c5 = Math.cos(angles[4]), s5 = Math.sin(angles[4]);
+            const c6 = Math.cos(angles[5]), s6 = Math.sin(angles[5]);
+            const l5 = 0.2;
+            x += c3 * l5 * Math.sin(angles[5]) * 0.5;
+            y += s3 * l5 * Math.sin(angles[5]) * 0.5;
+            z += l5 * Math.cos(angles[5]) * 0.3;
+            points.push({ x, y, z });
+            
+            // End effector
+            const l6 = 0.12;
+            x += c3 * l6 * 0.2;
+            y += s3 * l6 * 0.2;
+            z -= 0.05;
+            points.push({ x, y, z });
+            
+            return points;
+        }
+
+        // Draw the arm
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Background gradient
+            const bgGrad = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 0,
+                canvas.width / 2, canvas.height / 2, canvas.width / 2
+            );
+            bgGrad.addColorStop(0, '#1a1a2e');
+            bgGrad.addColorStop(1, '#0a0a0f');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            drawGrid();
+            
+            // Get FK points
+            const fkPoints = computeFK();
+            
+            // Transform and project points
+            const projectedPoints = fkPoints.map(p => {
+                const rotated = rotatePoint(p.x, p.z - 0.5, p.y, rotationX, rotationY);
+                return project(rotated.x, rotated.y, rotated.z);
+            });
+            
+            // Draw shadows
+            ctx.globalAlpha = 0.3;
+            projectedPoints.forEach((p, i) => {
+                if (i > 0) {
+                    const prev = projectedPoints[i - 1];
+                    ctx.beginPath();
+                    ctx.moveTo(prev.x + 5, prev.y + 5);
+                    ctx.lineTo(p.x + 5, p.y + 5);
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 12;
+                    ctx.stroke();
+                }
+            });
+            ctx.globalAlpha = 1;
+            
+            // Draw arm links
+            const colors = ['#3b82f6', '#8b5cf6', '#06b6d4', '#22c55e', '#f59e0b', '#ef4444'];
+            
+            projectedPoints.forEach((p, i) => {
+                if (i > 0) {
+                    const prev = projectedPoints[i - 1];
+                    const grad = ctx.createLinearGradient(prev.x, prev.y, p.x, p.y);
+                    grad.addColorStop(0, colors[(i - 1) % colors.length]);
+                    grad.addColorStop(1, colors[i % colors.length]);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(prev.x, prev.y);
+                    ctx.lineTo(p.x, p.y);
+                    ctx.strokeStyle = grad;
+                    ctx.lineWidth = 14 - i;
+                    ctx.lineCap = 'round';
+                    ctx.stroke();
+                    
+                    // Add glow effect
+                    ctx.shadowColor = colors[i % colors.length];
+                    ctx.shadowBlur = 15;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+                }
+            });
+            
+            // Draw joints
+            projectedPoints.forEach((p, i) => {
+                const radius = 10 - i * 0.8;
+                
+                // Joint gradient
+                const jointGrad = ctx.createRadialGradient(p.x - 2, p.y - 2, 0, p.x, p.y, radius);
+                jointGrad.addColorStop(0, '#ffffff');
+                jointGrad.addColorStop(0.5, colors[i % colors.length]);
+                jointGrad.addColorStop(1, '#1a1a2e');
+                
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+                ctx.fillStyle = jointGrad;
+                ctx.fill();
+                
+                // Joint border
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            });
+            
+            // Draw gripper
+            const ee = projectedPoints[projectedPoints.length - 1];
+            drawGripper(ee.x, ee.y);
+            
+            // Update end effector info
+            const lastFK = fkPoints[fkPoints.length - 1];
+            document.getElementById('eeX').textContent = lastFK.x.toFixed(3);
+            document.getElementById('eeY').textContent = lastFK.y.toFixed(3);
+            document.getElementById('eeZ').textContent = lastFK.z.toFixed(3);
+        }
+
+        function drawGrid() {
+            const gridSize = 10;
+            const spacing = 40;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2 + 100;
+            
+            ctx.strokeStyle = 'rgba(59, 130, 246, 0.1)';
+            ctx.lineWidth = 1;
+            
+            for (let i = -gridSize; i <= gridSize; i++) {
+                const x1 = centerX + i * spacing;
+                ctx.beginPath();
+                ctx.moveTo(x1, centerY - gridSize * spacing / 2);
+                ctx.lineTo(x1, centerY + gridSize * spacing / 2);
+                ctx.stroke();
+            }
+            
+            for (let i = -gridSize / 2; i <= gridSize / 2; i++) {
+                const y = centerY + i * spacing;
+                ctx.beginPath();
+                ctx.moveTo(centerX - gridSize * spacing, y);
+                ctx.lineTo(centerX + gridSize * spacing, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawGripper(x, y) {
+            const fingerLen = 20;
+            const fingerWidth = 4;
+            const opening = gripperOpen ? 15 : 5;
+            
+            // Gripper base
+            ctx.fillStyle = '#2a2a3a';
+            ctx.fillRect(x - 8, y - 5, 16, 10);
+            
+            // Left finger
+            const grad1 = ctx.createLinearGradient(x - opening, y, x - opening - fingerLen, y);
+            grad1.addColorStop(0, '#4a4a5a');
+            grad1.addColorStop(1, '#3a3a4a');
+            
+            ctx.save();
+            ctx.translate(x - opening, y);
+            ctx.rotate(-0.3);
+            ctx.fillStyle = grad1;
+            ctx.fillRect(0, -fingerWidth / 2, fingerLen, fingerWidth);
+            ctx.restore();
+            
+            // Right finger
+            ctx.save();
+            ctx.translate(x + opening, y);
+            ctx.rotate(0.3);
+            ctx.fillStyle = grad1;
+            ctx.fillRect(0, -fingerWidth / 2, fingerLen, fingerWidth);
+            ctx.restore();
+            
+            // Finger tips
+            ctx.fillStyle = gripperOpen ? '#22c55e' : '#f59e0b';
+            ctx.beginPath();
+            ctx.arc(x - opening - fingerLen + 5, y + 3, 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(x + opening + fingerLen - 5, y + 3, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Resize handler
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            draw();
+        }
+
+        // Mouse interaction
+        canvas.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaX = e.clientX - lastMouseX;
+                const deltaY = e.clientY - lastMouseY;
+                
+                rotationY += deltaX * 0.01;
+                rotationX += deltaY * 0.01;
+                
+                // Clamp rotation
+                rotationX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotationX));
+                
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+                draw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => isDragging = false);
+        canvas.addEventListener('mouseleave', () => isDragging = false);
+
+        canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            zoom *= e.deltaY > 0 ? 0.95 : 1.05;
+            zoom = Math.max(0.5, Math.min(2.5, zoom));
+            draw();
+        });
+
+        // Touch support
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                lastMouseX = e.touches[0].clientX;
+                lastMouseY = e.touches[0].clientY;
+            }
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            if (isDragging && e.touches.length === 1) {
+                const deltaX = e.touches[0].clientX - lastMouseX;
+                const deltaY = e.touches[0].clientY - lastMouseY;
+                
+                rotationY += deltaX * 0.01;
+                rotationX += deltaY * 0.01;
+                rotationX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotationX));
+                
+                lastMouseX = e.touches[0].clientX;
+                lastMouseY = e.touches[0].clientY;
+                draw();
+            }
+        });
+
+        canvas.addEventListener('touchend', () => isDragging = false);
+
+        // Initialize
+        window.addEventListener('resize', resizeCanvas);
+        initJointControls();
+        resizeCanvas();
+
+        // Add CSS animation for spinner
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+            .spin { animation: spin 1s linear infinite; }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+    "name": "RFSN-Control-Core",
+    "version": "12.1.0",
+    "deterministic": true,
+    "learning_authority": false,
+    "safety_enforced": true,
+    "hardening_date": "2026-01-19"
+}

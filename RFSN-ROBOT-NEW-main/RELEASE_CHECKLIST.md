@@ -1,0 +1,1 @@
+# Production Safety Checklist (Non-Optional)\n\n**If any item is unchecked → not shippable.**\n\n- [x] Self-collision enabled\n- [ ] Orientation IK active\n- [ ] No timer-based transitions\n- [x] Safety envelope enforced\n- [x] Learner firewalled\n- [x] Deterministic seed set\n- [x] Fault state reachable\n- [x] Logs reproducible

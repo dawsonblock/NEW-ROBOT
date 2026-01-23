@@ -1,0 +1,165 @@
+# RFSN-ROBOT V12 Task Specification: Pick and Place
+# =================================================
+# Declarative definition of the pick-and-place task.
+
+name: pick_place
+version: "1.0"
+description: "Standard pick and place task for Panda robot with cube"
+
+initial_state: IDLE
+terminal_states:
+  - SUCCESS
+  - FAIL
+
+# Guard thresholds
+position_threshold: 0.03  # 3cm
+velocity_threshold: 0.05  # 5cm/s
+orientation_threshold: 0.1
+
+# Default settings
+default_timeout_sec: 10.0
+default_profile_variant: base
+
+states:
+  IDLE:
+    target:
+      type: relative_to_ee
+      offset: [0, 0, 0]
+    timeout_sec: 1.0
+    profile_variant: base
+    contact_policy: AVOID
+    max_tau_scale: 0.5
+    transitions:
+      - to: REACH_PREGRASP
+        guard: "time_elapsed(0.5)"
+        priority: 0
+
+  REACH_PREGRASP:
+    target:
+      type: symbolic
+      symbolic: above_cube
+    timeout_sec: 5.0
+    profile_variant: precise
+    contact_policy: AVOID
+    max_tau_scale: 0.8
+    transitions:
+      - to: REACH_GRASP
+        guard: "and(position_reached(0.03), velocity_low)"
+        priority: 1
+      - to: RECOVER
+        guard: timeout
+        priority: 0
+
+  REACH_GRASP:
+    target:
+      type: symbolic
+      symbolic: grasp_cube
+    timeout_sec: 3.0
+    profile_variant: smooth
+    contact_policy: ALLOW_EE
+    max_tau_scale: 0.7
+    transitions:
+      - to: GRASP
+        guard: "and(position_reached(0.02), contact_detected)"
+        priority: 1
+      - to: RECOVER
+        guard: timeout
+        priority: 0
+
+  GRASP:
+    target:
+      type: relative_to_ee
+      offset: [0, 0, 0]
+    timeout_sec: 2.0
+    profile_variant: stable
+    contact_policy: ALLOW_EE
+    max_tau_scale: 0.6
+    transitions:
+      - to: LIFT
+        guard: "grasp_stable(0.7)"
+        priority: 1
+      - to: RECOVER
+        guard: timeout
+        priority: 0
+
+  LIFT:
+    target:
+      type: relative_to_ee
+      offset: [0, 0, 0.15]
+    timeout_sec: 3.0
+    profile_variant: smooth
+    contact_policy: ALLOW_EE
+    max_tau_scale: 0.8
+    transitions:
+      - to: TRANSPORT
+        guard: "cube_lifted(0.05)"
+        priority: 1
+      - to: RECOVER
+        guard: timeout
+        priority: 0
+
+  TRANSPORT:
+    target:
+      type: absolute
+      position: [0.0, 0.3, 0.5]
+      quaternion: [1, 0, 0, 0]
+    timeout_sec: 5.0
+    profile_variant: base
+    contact_policy: ALLOW_EE
+    max_tau_scale: 0.8
+    transitions:
+      - to: PLACE
+        guard: "position_reached(0.03)"
+        priority: 1
+      - to: RECOVER
+        guard: timeout
+        priority: 0
+
+  PLACE:
+    target:
+      type: absolute
+      position: [0.0, 0.3, 0.43]
+      quaternion: [1, 0, 0, 0]
+    timeout_sec: 3.0
+    profile_variant: smooth
+    contact_policy: ALLOW_PUSH
+    max_tau_scale: 0.7
+    transitions:
+      - to: SUCCESS
+        guard: "and(position_reached(0.02), velocity_low)"
+        priority: 1
+      - to: RECOVER
+        guard: timeout
+        priority: 0
+
+  RECOVER:
+    target:
+      type: relative_to_ee
+      offset: [0, 0, 0.05]
+    timeout_sec: 5.0
+    profile_variant: stable
+    contact_policy: AVOID
+    max_tau_scale: 0.4
+    transitions:
+      - to: IDLE
+        guard: "and(position_reached(0.05), velocity_low)"
+        priority: 1
+      - to: FAIL
+        guard: timeout
+        priority: 0
+
+  SUCCESS:
+    target:
+      type: relative_to_ee
+      offset: [0, 0, 0]
+    timeout_sec: 1000.0
+    profile_variant: base
+    transitions: []
+
+  FAIL:
+    target:
+      type: relative_to_ee
+      offset: [0, 0, 0]
+    timeout_sec: 1000.0
+    profile_variant: base
+    transitions: []

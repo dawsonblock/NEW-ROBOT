@@ -1,0 +1,13 @@
+<!-- MyCobot Safe Configuration -->
+<mujoco model="mycobot_safe">
+  <option timestep="0.003"/>
+  <flag contact="enable"/>
+
+  <default>
+    <joint damping="0.8"/>
+    <geom friction="1.1 0.01 0.01"/>
+  </default>
+
+  <!-- Include main robot model -->
+  <!-- <include file="mycobot.xml"/> -->
+</mujoco>

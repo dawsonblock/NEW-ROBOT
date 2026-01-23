@@ -1,0 +1,33 @@
+[project]
+name = "rfsn-robot-v12-modified-2"
+version = "0.1.0"
+description = "RFSN Robot V12 executive + safety + evaluation"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "mujoco>=3.1.0",
+    "numpy>=1.26,<3.0",
+    "scipy>=1.11,<2.0",
+    "osqp>=1.0.0",
+    "pyyaml>=6.0",
+    "pandas>=2.0",
+    "matplotlib>=3.8",
+    "imageio>=2.34",
+    "glfw>=2.7.0",
+    "z3-solver>=4.12",
+]
+
+[project.optional-dependencies]
+rl = [
+    "torch>=2.2",
+]
+dev = [
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["rfsn", "eval"]

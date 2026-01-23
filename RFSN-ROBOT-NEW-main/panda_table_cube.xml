@@ -1,0 +1,137 @@
+<?xml version="1.0" ?>
+<mujoco model="panda_table_cube">
+    <compiler angle="radian" />
+    <option timestep="0.001" gravity="0 0 -9.81" integrator="RK4">
+        <flag contact="enable" />
+    </option>
+    
+    <size nconmax="100" njmax="500" />
+    
+    <default>
+        <default class="panda">
+            <joint type="hinge" damping="5.0" armature="0.1" frictionloss="0.1" />
+            <geom friction="1 0.5 0.5" type="capsule" solimp="0.95 0.99 0.001" solref="0.01 1" />
+        </default>
+        <default class="gripper">
+            <joint type="slide" damping="20" armature="0.01" />
+            <geom friction="2.0 1.0 0.5" type="box" />
+        </default>
+        <default class="table">
+            <geom type="box" friction="1 0.5 0.5" rgba="0.6 0.4 0.2 1" />
+        </default>
+    </default>
+    
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1="0.6 0.6 0.6" rgb2="0.2 0.2 0.2" width="512" height="512"/>
+    </asset>
+    
+    <worldbody>
+        <light directional="true" pos="0 0 3" dir="0 0 -1"/>
+        
+        <!-- Table (static) -->
+        <geom class="table" name="table_top" pos="0 0 0.4" size="0.5 0.5 0.02" />
+        <geom class="table" name="table_leg1" pos="0.4 0.4 0.2" size="0.02 0.02 0.2" />
+        <geom class="table" name="table_leg2" pos="-0.4 0.4 0.2" size="0.02 0.02 0.2" />
+        <geom class="table" name="table_leg3" pos="0.4 -0.4 0.2" size="0.02 0.02 0.2" />
+        <geom class="table" name="table_leg4" pos="-0.4 -0.4 0.2" size="0.02 0.02 0.2" />
+        
+        <!-- Panda Arm (simplified 7-DOF) -->
+        <body name="panda_base" pos="0 0 0.42">
+            <inertial pos="0 0 0.025" mass="3.0" diaginertia="0.02 0.02 0.02" />
+            <geom name="panda_base_geom" type="cylinder" size="0.08 0.05" rgba="0.8 0.8 0.8 1" />
+            
+            <!-- Joint 1 -->
+            <body name="panda_link1" pos="0 0 0.05">
+                <inertial pos="0 0 0.15" mass="3.5" diaginertia="0.08 0.08 0.02" />
+                <joint name="panda_joint1" class="panda" axis="0 0 1" range="-2.8973 2.8973" />
+                <geom name="panda_link1_geom" class="panda" fromto="0 0 0 0 0 0.3" size="0.045" rgba="0.9 0.9 0.9 1" />
+                
+                <!-- Joint 2 -->
+                <body name="panda_link2" pos="0 0 0.3">
+                    <inertial pos="0 0 0.1" mass="3.5" diaginertia="0.08 0.08 0.02" />
+                    <joint name="panda_joint2" class="panda" axis="0 1 0" range="-1.7628 1.7628" />
+                    <geom name="panda_link2_geom" class="panda" fromto="0 0 0 0 0 0.2" size="0.045" rgba="0.9 0.9 0.9 1" />
+                    
+                    <!-- Joint 3 -->
+                    <body name="panda_link3" pos="0 0 0.2">
+                        <inertial pos="0 0.04 0.15" mass="2.8" diaginertia="0.06 0.06 0.015" />
+                        <joint name="panda_joint3" class="panda" axis="0 0 1" range="-2.8973 2.8973" />
+                        <geom name="panda_link3_geom" class="panda" fromto="0 0 0 0.08 0 0.3" size="0.04" rgba="0.9 0.9 0.9 1" />
+                        
+                        <!-- Joint 4 -->
+                        <body name="panda_link4" pos="0.08 0 0.3">
+                            <inertial pos="-0.04 0 0.1" mass="2.8" diaginertia="0.06 0.06 0.015" />
+                            <joint name="panda_joint4" class="panda" axis="0 -1 0" range="-3.0718 -0.0698" />
+                            <geom name="panda_link4_geom" class="panda" fromto="0 0 0 -0.08 0 0.2" size="0.04" rgba="0.9 0.9 0.9 1" />
+                            
+                            <!-- Joint 5 -->
+                            <body name="panda_link5" pos="-0.08 0 0.2">
+                                <inertial pos="0 0 0.15" mass="2.0" diaginertia="0.04 0.04 0.01" />
+                                <joint name="panda_joint5" class="panda" axis="0 0 1" range="-2.8973 2.8973" />
+                                <geom name="panda_link5_geom" class="panda" fromto="0 0 0 0 0 0.3" size="0.035" rgba="0.9 0.9 0.9 1" />
+                                
+                                <!-- Joint 6 -->
+                                <body name="panda_link6" pos="0 0 0.3">
+                                    <inertial pos="0.04 0 0.05" mass="1.8" diaginertia="0.03 0.03 0.008" />
+                                    <joint name="panda_joint6" class="panda" axis="0 1 0" range="-0.0175 3.7525" />
+                                    <geom name="panda_link6_geom" class="panda" fromto="0 0 0 0.08 0 0.08" size="0.035" rgba="0.9 0.9 0.9 1" />
+                                    
+                                    <!-- Joint 7 (wrist) -->
+                                    <body name="panda_link7" pos="0.08 0 0.08">
+                                        <inertial pos="0 0 0.05" mass="1.2" diaginertia="0.02 0.02 0.005" />
+                                        <joint name="panda_joint7" class="panda" axis="0 0 1" range="-2.8973 2.8973" />
+                                        <geom name="panda_link7_geom" class="panda" fromto="0 0 0 0 0 0.08" size="0.03" rgba="0.9 0.9 0.9 1" />
+                                        
+                                        <!-- End effector / gripper frame -->
+                                        <body name="panda_hand" pos="0 0 0.08">
+                                            <inertial pos="0 0 0.04" mass="0.8" diaginertia="0.008 0.008 0.008" />
+                                            <geom name="panda_hand_geom" type="box" size="0.04 0.04 0.04" friction="2 1 0.5" rgba="0.2 0.2 0.2 1" />
+                                            
+                                            <!-- Left finger -->
+                                            <body name="panda_finger_left" pos="0 0.02 0.06">
+                                                <inertial pos="0 0 0.02" mass="0.1" diaginertia="0.001 0.001 0.001" />
+                                                <joint name="panda_finger_left_joint" class="gripper" axis="0 1 0" range="-0.04 0.04" />
+                                                <geom name="panda_finger_left_geom" type="box" size="0.008 0.01 0.025" friction="2 0.5 0.5" condim="4" rgba="0.3 0.3 0.3 1" />
+                                            </body>
+                                            
+                                            <!-- Right finger -->
+                                            <body name="panda_finger_right" pos="0 -0.02 0.06">
+                                                <inertial pos="0 0 0.02" mass="0.1" diaginertia="0.001 0.001 0.001" />
+                                                <joint name="panda_finger_right_joint" class="gripper" axis="0 1 0" range="-0.04 0.04" />
+                                                <geom name="panda_finger_right_geom" type="box" size="0.008 0.01 0.025" friction="2 0.5 0.5" condim="4" rgba="0.3 0.3 0.3 1" />
+                                            </body>
+                                        </body>
+                                    </body>
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+        
+        <!-- Free cube on table -->
+        <body name="cube" pos="0.3 0.0 0.47">
+            <inertial pos="0 0 0" mass="0.2" diaginertia="0.0001 0.0001 0.0001" />
+            <freejoint name="cube_freejoint" />
+            <geom name="cube_geom" type="box" size="0.015 0.015 0.015" 
+                  friction="1 0.5 0.5" condim="3" rgba="1 0.2 0.2 1" />
+        </body>
+    </worldbody>
+    
+    <actuator>
+        <!-- Joint motors (torque control) -->
+        <motor name="panda_motor1" joint="panda_joint1" ctrlrange="-87 87" />
+        <motor name="panda_motor2" joint="panda_joint2" ctrlrange="-87 87" />
+        <motor name="panda_motor3" joint="panda_joint3" ctrlrange="-87 87" />
+        <motor name="panda_motor4" joint="panda_joint4" ctrlrange="-87 87" />
+        <motor name="panda_motor5" joint="panda_joint5" ctrlrange="-12 12" />
+        <motor name="panda_motor6" joint="panda_joint6" ctrlrange="-12 12" />
+        <motor name="panda_motor7" joint="panda_joint7" ctrlrange="-12 12" />
+        
+        <!-- Gripper motors -->
+        <motor name="panda_gripper_left" joint="panda_finger_left_joint" ctrlrange="-100 100" gear="200" />
+        <motor name="panda_gripper_right" joint="panda_finger_right_joint" ctrlrange="-100 100" gear="200" />
+    </actuator>
+    
+</mujoco>
